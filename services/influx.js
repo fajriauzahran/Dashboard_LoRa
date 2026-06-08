@@ -1,13 +1,11 @@
 require("dotenv").config();
 const { InfluxDB } = require("@influxdata/influxdb-client");
 
-// ambil env dengan fallback (BIAR TIDAK CRASH)
 const url = process.env.INFLUX_URL;
 const token = process.env.INFLUX_TOKEN;
 const org = process.env.INFLUX_ORG;
 const bucket = process.env.INFLUX_BUCKET;
 
-// hanya buat client kalau semua tersedia
 let queryApi = null;
 
 if (url && token && org) {
@@ -16,47 +14,67 @@ if (url && token && org) {
 }
 
 async function getLatestData() {
-    // MODE FALLBACK (kalau influx belum siap)
+
     if (!queryApi) {
         return {
-            heart_rate: Math.floor(Math.random() * 30) + 70,
-            body_temp: (36 + Math.random() * 1.5).toFixed(1),
-            co: Math.floor(Math.random() * 80),
-            h2s: Math.floor(Math.random() * 15),
-            ch4: Math.floor(Math.random() * 300)
+            suhu: 36.5,
+            detak: 80,
+            CH4: 120,
+            CO: 10,
+            H2S: 2,
+            lat: -7.1375,
+            lon: 111.5979
         };
     }
 
-    // QUERY INFLUXDB (REAL MODE)
     const fluxQuery = `
-    from(bucket: "${bucket}")
-      |> range(start: -1m)
-      |> last()
-    `;
+from(bucket: "${bucket}")
+  |> range(start: -1h)
+  |> filter(fn: (r) => r._measurement == "sensor_pekerja")
+  |> last()
+`;
 
     try {
         const result = await queryApi.collectRows(fluxQuery);
 
         if (!result.length) throw new Error("No data");
 
-        const row = result[0];
-
-        return {
-            heart_rate: row._value || 0,
-            body_temp: row._value || 0,
-            co: row._value || 0,
-            h2s: row._value || 0,
-            ch4: row._value || 0
+        const data = {
+            suhu: null,
+            detak: null,
+            CH4: null,
+            CO: null,
+            H2S: null,
+            lat: null,
+            lon: null
         };
 
+        result.forEach(r => {
+            const field = r._field;
+            const value = r._value;
+
+            if (field === "suhu") data.suhu = value;
+            if (field === "detak") data.detak = value;
+            if (field === "CH4") data.CH4 = value;
+            if (field === "CO") data.CO = value;
+            if (field === "H2S") data.H2S = value;
+            if (field === "lat") data.lat = value;
+            if (field === "lon") data.lon = value;
+        });
+
+        return data;
+
     } catch (err) {
-        console.log("Influx error, fallback dummy");
+        console.log("Influx error → fallback dummy");
+
         return {
-            heart_rate: 80,
-            body_temp: 36.5,
-            co: 10,
-            h2s: 2,
-            ch4: 120
+            suhu: 36.5,
+            detak: 80,
+            CH4: 120,
+            CO: 10,
+            H2S: 2,
+            lat: -7.1375,
+            lon: 111.5979
         };
     }
 }
