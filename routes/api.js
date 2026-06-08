@@ -1,20 +1,34 @@
 const { getLatestData } = require("../services/influx");
 
-// fallback dummy kalau influx belum siap
+// =====================
+// API CONTROLLER
+// =====================
 async function getData(req, res) {
     try {
         const data = await getLatestData();
-        res.json(data);
+
+        // normalize biar frontend stabil
+        res.json({
+            suhu: data.suhu,
+            detak: data.detak,
+            CH4: data.CH4,
+            CO: data.CO,
+            H2S: data.H2S,
+            lat: data.lat,
+            lon: data.lon
+        });
+
     } catch (err) {
-        console.log("Influx error, using dummy data");
+        console.log("Influx error → fallback dummy");
 
         res.json({
-            worker_id: "W001",
-            heart_rate: 80,
-            body_temp: 36.5,
-            co: 10,
-            h2s: 2,
-            ch4: 120
+            suhu: 36.5,
+            detak: 80,
+            CH4: 120,
+            CO: 10,
+            H2S: 2,
+            lat: -7.1375,
+            lon: 111.5979
         });
     }
 }
