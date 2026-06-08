@@ -4,13 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Worker Health Monitor</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
+
 <body>
 
 <div class="dashboard-container">
-    
+
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="logo">⚙️</div>
         <div class="nav-icons">
@@ -24,81 +31,85 @@
         </div>
     </div>
 
+    <!-- MAIN -->
     <div class="main-content">
+
         <div class="header">
             <div>
                 <h1>Health Overview</h1>
                 <p class="subtitle">Worker Monitoring System</p>
             </div>
+
             <div class="header-actions">
                 <button class="icon-btn">🔍</button>
                 <button class="icon-btn">🔔</button>
             </div>
         </div>
 
+        <!-- METRICS -->
         <div class="metrics-grid">
+
             <div class="metric-card">
                 <div class="card-header">
-                    <span class="icon-box" style="color: #ff6b6b; background: #ffeeee;">❤️</span>
+                    <span class="icon-box">❤️</span>
                     <span class="card-title">Heart Rate</span>
                 </div>
                 <div class="card-value"><span id="hr">--</span></div>
-                <div class="badge normal">Normal</div>
             </div>
 
             <div class="metric-card">
                 <div class="card-header">
-                    <span class="icon-box" style="color: #feca57; background: #fff9e6;">🌡️</span>
+                    <span class="icon-box">🌡️</span>
                     <span class="card-title">Body Temp</span>
                 </div>
                 <div class="card-value"><span id="temp">--</span></div>
-                <div class="badge normal">Normal</div>
             </div>
 
             <div class="metric-card">
                 <div class="card-header">
-                    <span class="icon-box" style="color: #ff9f43; background: #fff0e6;">🟠</span>
-                    <span class="card-title">Carbon Monoxide</span>
+                    <span class="icon-box">🟠</span>
+                    <span class="card-title">CO</span>
                 </div>
                 <div class="card-value"><span id="co">--</span></div>
             </div>
 
             <div class="metric-card">
                 <div class="card-header">
-                    <span class="icon-box" style="color: #9b59b6; background: #f4e6f9;">🟣</span>
-                    <span class="card-title">Hydrogen Sulfide</span>
+                    <span class="icon-box">🟣</span>
+                    <span class="card-title">H2S</span>
                 </div>
                 <div class="card-value"><span id="h2s">--</span></div>
             </div>
 
             <div class="metric-card">
                 <div class="card-header">
-                    <span class="icon-box" style="color: #1dd1a1; background: #e6f9f4;">🟢</span>
-                    <span class="card-title">Methane</span>
+                    <span class="icon-box">🟢</span>
+                    <span class="card-title">CH4</span>
                 </div>
                 <div class="card-value"><span id="ch4">--</span></div>
             </div>
+
         </div>
-        
-        <div class="activity-chart">
-            <div class="chart-header">
-                <h3>Activity & Exposure Growth</h3>
-                <select><option>This Week</option></select>
-            </div>
-            <div class="chart-placeholder">
-                <p style="color: #a0a5b1; text-align: center; padding-top: 40px;">[Chart UI Placeholder]</p>
-            </div>
+
+        <!-- MAP BUTTON -->
+        <div style="margin-top:20px;">
+            <button onclick="openMap()" class="map-btn">
+                📍 View Worker Location
+            </button>
         </div>
+
     </div>
 
+    <!-- RIGHT PANEL -->
     <div class="right-panel">
+
         <div class="panel-header">
             <h2>Worker Profile</h2>
             <select class="dark-select"><option>W001</option></select>
         </div>
 
         <div class="worker-info">
-            <img src="https://ui-avatars.com/api/?name=Worker+1&background=4F8CFF&color=fff" alt="Worker Avatar" class="avatar">
+            <img src="https://ui-avatars.com/api/?name=Worker+1&background=4F8CFF&color=fff" class="avatar">
             <h3>Worker ID: W001</h3>
             <p>Refinery Site A</p>
         </div>
@@ -106,14 +117,29 @@
         <div class="status-section">
             <div class="status-header">
                 <h3>Overall Status</h3>
-                <span style="font-size: 12px; color: #888;">Live Monitor</span>
+                <span style="font-size:12px;color:#888;">Live</span>
             </div>
             <div class="status-indicator" id="status-box">
                 <span id="status-text">SAFE</span>
             </div>
         </div>
+
     </div>
 
+</div>
+
+<!-- MAP MODAL -->
+<div id="mapModal" class="map-modal">
+    <div class="map-box">
+
+        <div class="map-top">
+            <h3>Worker Live Location</h3>
+            <button onclick="closeMap()">✖</button>
+        </div>
+
+        <div id="map"></div>
+
+    </div>
 </div>
 
 <script src="dashboard.js"></script>

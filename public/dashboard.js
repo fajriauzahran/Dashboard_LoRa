@@ -1,17 +1,52 @@
+let map;
+let marker;
+let mapReady = false;
+
+// =====================
+// OPEN MAP
+// =====================
+function openMap() {
+    document.getElementById("mapModal").style.display = "flex";
+
+    if (!mapReady) {
+        map = L.map('map').setView([-7.13, 111.59], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        marker = L.marker([-7.13, 111.59]).addTo(map);
+
+        mapReady = true;
+    }
+
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 200);
+}
+
+// =====================
+// CLOSE MAP
+// =====================
+function closeMap() {
+    document.getElementById("mapModal").style.display = "none";
+}
+
+// =====================
+// FETCH DATA
+// =====================
 async function fetchData() {
     try {
         const res = await fetch("/api/latest");
         const data = await res.json();
 
-        console.log("DATA FROM API:", data);
+        document.getElementById("hr").innerText = data.detak + " bpm";
+        document.getElementById("temp").innerText = data.suhu + " °C";
+        document.getElementById("co").innerText = data.CO;
+        document.getElementById("h2s").innerText = data.H2S;
+        document.getElementById("ch4").innerText = data.CH4;
 
-        document.getElementById("hr").innerText = data.detak ?? "--";
-        document.getElementById("temp").innerText = data.suhu + " °C" ?? "--";
-        document.getElementById("co").innerText = data.CO ?? "--";
-        document.getElementById("h2s").innerText = data.H2S ?? "--";
-        document.getElementById("ch4").innerText = data.CH4 ?? "--";
-
-        // STATUS LOGIC
+        // STATUS
         let status = "SAFE";
         let color = "#2ECC71";
 
@@ -26,10 +61,22 @@ async function fetchData() {
         document.getElementById("status-box").style.background = color;
         document.getElementById("status-text").innerText = status;
 
+        // =====================
+        // UPDATE MAP
+        // =====================
+        if (mapReady && data.lat && data.lon) {
+            const lat = parseFloat(data.lat);
+            const lon = parseFloat(data.lon);
+
+            marker.setLatLng([lat, lon]);
+            map.setView([lat, lon], 16);
+        }
+
     } catch (err) {
-        console.error("FETCH ERROR:", err);
+        console.error(err);
     }
 }
 
+// START
 fetchData();
 setInterval(fetchData, 2000);
