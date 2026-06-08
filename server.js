@@ -20,23 +20,15 @@ const client = new InfluxDB({ url, token });
 const queryApi = client.getQueryApi(org);
 
 // =====================
-// GET LATEST DATA
+// GET LATEST DATA (USING LAST)
 // =====================
 async function getLatestData() {
 
     const fluxQuery = `
 from(bucket: "${bucket}")
-  |> range(start: -5m)
+  |> range(start: -1h)
   |> filter(fn: (r) => r._measurement == "sensor_pekerja")
-  |> filter(fn: (r) => r._field == "suhu" or
-                      r._field == "detak" or
-                      r._field == "CH4" or
-                      r._field == "CO" or
-                      r._field == "H2S" or
-                      r._field == "lat" or
-                      r._field == "lon")
   |> last()
-  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
 `;
 
     try {
@@ -46,17 +38,22 @@ from(bucket: "${bucket}")
             throw new Error("No data found");
         }
 
-        const row = rows[0];
-
-        return {
-            suhu: row.suhu,
-            detak: row.detak,
-            CH4: row.CH4,
-            CO: row.CO,
-            H2S: row.H2S,
-            lat: row.lat,
-            lon: row.lon
+        // hasil last() biasanya 1 field per row → kita gabungkan manual
+        const data = {
+            suhu: null,
+            detak: null,
+            CH4: null,
+            CO: null,
+            H2S: null,
+            lat: null,
+            lon: null
         };
+
+        rows.forEach(r => {
+            data[r._field] = r._value;
+        });
+
+        return data;
 
     } catch (err) {
         console.log("⚠ Influx error → fallback dummy data");
@@ -74,7 +71,7 @@ from(bucket: "${bucket}")
 }
 
 // =====================
-// API ENDPOINT
+// API
 // =====================
 app.get("/api/latest", async (req, res) => {
     const data = await getLatestData();
