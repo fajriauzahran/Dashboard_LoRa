@@ -1,27 +1,45 @@
 require("dotenv").config();
 const { InfluxDB } = require("@influxdata/influxdb-client");
 
+// =====================
+// ENV
+// =====================
 const url = process.env.INFLUX_URL;
 const token = process.env.INFLUX_TOKEN;
 const org = process.env.INFLUX_ORG;
 const bucket = process.env.INFLUX_BUCKET;
 
-console.log("🔍 INFLUX CONFIG:", { url, org, bucket });
+// =====================
+// DEBUG CONFIG (WAJIB)
+// =====================
+console.log("🔍 INFLUX CONFIG CHECK:");
+console.log({ url, org, bucket });
 
+// =====================
+// VALIDATION (BIAR LANGSUNG KETAHU SALAH)
+// =====================
+if (!url || !token || !org || !bucket) {
+    console.error("❌ ENV INCOMPLETE - CHECK .env FILE");
+}
+
+// =====================
+// INFLUX CLIENT
+// =====================
 let queryApi = null;
 
 if (url && token && org) {
     const client = new InfluxDB({ url, token });
     queryApi = client.getQueryApi(org);
 } else {
-    console.error("❌ ENV tidak lengkap!");
+    console.warn("⚠️ Influx client NOT initialized (using fallback mode)");
 }
 
 // =====================
-// GET LATEST DATA
+// GET DATA
 // =====================
 async function getLatestData() {
 
+    // fallback kalau tidak connect
     if (!queryApi) {
         return fallback();
     }
@@ -34,11 +52,11 @@ from(bucket: "${bucket}")
 `;
 
     try {
-        const rows = await queryApi.collectRows(fluxQuery);
+        const result = await queryApi.collectRows(fluxQuery);
 
-        console.log("📦 RAW ROWS:", rows.length);
+        console.log("📦 RAW RESULT LENGTH:", result.length);
 
-        if (!rows.length) throw new Error("No data from Influx");
+        if (!result.length) throw new Error("No data from InfluxDB");
 
         const data = {
             suhu: null,
@@ -50,30 +68,33 @@ from(bucket: "${bucket}")
             lon: null
         };
 
-        rows.forEach(r => {
-            const field = r._field;
-            const value = r._value;
+        result.forEach(r => {
+            console.log(`📌 ${r._field} = ${r._value}`);
 
-            if (field === "suhu") data.suhu = value;
-            if (field === "detak") data.detak = value;
-            if (field === "CH4") data.CH4 = value;
-            if (field === "CO") data.CO = value;
-            if (field === "H2S") data.H2S = value;
-            if (field === "lat") data.lat = value;
-            if (field === "lon") data.lon = value;
+            if (r._field === "suhu") data.suhu = r._value;
+            if (r._field === "detak") data.detak = r._value;
+            if (r._field === "CH4") data.CH4 = r._value;
+            if (r._field === "CO") data.CO = r._value;
+            if (r._field === "H2S") data.H2S = r._value;
+            if (r._field === "lat") data.lat = r._value;
+            if (r._field === "lon") data.lon = r._value;
         });
 
         return data;
 
     } catch (err) {
-        console.error("❌ INFLUX ERROR:", err.message);
+        console.error("❌ INFLUX QUERY ERROR:");
+        console.error(err.message);
+
         return fallback();
     }
 }
 
 // =====================
+// FALLBACK DATA
+// =====================
 function fallback() {
-    console.log("⚠ USING FALLBACK DATA");
+    console.log("⚠️ USING FALLBACK DATA");
 
     return {
         suhu: 36.5,
